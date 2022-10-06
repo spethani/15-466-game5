@@ -8,3 +8,4 @@ Authors to credit:
  sphere-roller.blend -- Jim McCann
  sphere-world.blend -- Jim McCann
  phone-bank.blend -- Jim McCann
+ four-color.blend -- Sarah Pethani
