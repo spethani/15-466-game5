@@ -18,6 +18,9 @@ struct PlayMode : Mode {
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
 	//----- game state -----
+	std::string target_cube;
+	float time_elapsed;
+	unsigned int score;
 
 	//input tracking:
 	struct Button {

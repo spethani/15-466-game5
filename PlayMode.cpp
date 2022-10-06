@@ -13,6 +13,18 @@
 
 #include <random>
 
+glm::vec2 red_cube = glm::vec2(16.0, 0.0);
+glm::vec2 yellow_cube = glm::vec2(0.0, -16.0);
+glm::vec2 green_cube = glm::vec2(-16.0, 0.0);
+glm::vec2 blue_cube = glm::vec2(0.0, 16.0);
+std::vector<std::string> colors = {"red", "yellow", "green", "blue"};
+float cube_size = 2.0;
+float time_to_cube = 20.0;
+// random code taken from https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
+std::random_device rd; // obtain a random number from hardware
+std::mt19937 gen(rd()); // seed the generator
+std::uniform_int_distribution<> distr(0, 3); // define the range
+
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 	MeshBuffer const *ret = new MeshBuffer(data_path("four-color.pnct"));
@@ -66,6 +78,10 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	//other things
+	time_elapsed = 0.0f;
+	target_cube = colors[(unsigned int)distr(gen)];
+	score = 0;
 }
 
 PlayMode::~PlayMode() {
@@ -212,6 +228,42 @@ void PlayMode::update(float elapsed) {
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
 
+		{ // check if player is in cube
+			time_elapsed += elapsed;
+			glm::vec2 player_pos = glm::vec2(player.transform->position.x, player.transform->position.y);
+
+			// check which cube we're on
+			std::string current_cube = "";
+			if (red_cube.x - cube_size <= player_pos.x && player_pos.x <= red_cube.x + cube_size
+				&& red_cube.y - cube_size <= player_pos.y && player_pos.y <= red_cube.y + cube_size) {
+				current_cube = "red";
+			}
+			if (yellow_cube.x - cube_size <= player_pos.x && player_pos.x <= yellow_cube.x + cube_size
+				&& yellow_cube.y - cube_size <= player_pos.y && player_pos.y <= yellow_cube.y + cube_size) {
+				current_cube = "yellow";
+			}
+			if (green_cube.x - cube_size <= player_pos.x && player_pos.x <= green_cube.x + cube_size
+				&& green_cube.y - cube_size <= player_pos.y && player_pos.y <= green_cube.y + cube_size) {
+				current_cube = "green";
+			}
+			if (blue_cube.x - cube_size <= player_pos.x && player_pos.x <= blue_cube.x + cube_size
+				&& blue_cube.y - cube_size <= player_pos.y && player_pos.y <= blue_cube.y + cube_size) {
+				current_cube = "blue";
+			}
+
+			if (current_cube == target_cube) {
+				score++;
+				time_elapsed = 0.0f;
+				while (current_cube == target_cube) target_cube = colors[(unsigned int)distr(gen)];
+			}
+			else if (time_elapsed > time_to_cube) {
+				score = 0;
+				target_cube = colors[(unsigned int)distr(gen)];
+				time_elapsed -= time_to_cube;
+			}
+			
+		}
+
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
 		glm::vec3 right = frame[0];
@@ -273,12 +325,13 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 		constexpr float H = 0.09f;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+		std::string message = "Mouse motion looks; WASD moves; escape ungrabs mouse; " + target_cube + " cube; score " + std::to_string(score);
+		lines.draw_text(message,
 			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
 		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
+		lines.draw_text(message,
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
