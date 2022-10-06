@@ -141,6 +141,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	}
 
 	// check when/if this velocity pushes start.weights into an edge
+	// code based off of discussion in lecture
 	end = start;
 	time = 1.0f;
 	glm::vec3 end_step = start.weights + time * step_coords;
